@@ -1,0 +1,29 @@
+spring.application.name=parking_reservation
+
+# Database
+spring.datasource.url=jdbc:mysql://localhost:3306/parking_reservation
+spring.datasource.username=root
+spring.datasource.password=YOUR_DB_PASSWORD
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+
+# Google OAuth2 - Get these from Google Cloud Console
+spring.security.oauth2.client.registration.google.client-id=YOUR_GOOGLE_CLIENT_ID
+spring.security.oauth2.client.registration.google.client-secret=YOUR_GOOGLE_CLIENT_SECRET
+spring.security.oauth2.client.registration.google.scope=email,profile
+spring.security.oauth2.client.registration.google.redirect-uri={baseUrl}/login/oauth2/code/{registrationId}
+
+# JWT
+app.jwt.secret=SmFydmFTZWNyZXRLZXlGb3JTbWFydFBhcmtpbmdTeXN0ZW0yMDI2U0xJSVQ=
+app.jwt.expiration=86400000
+
+# Frontend URL
+app.frontend.url=http://localhost:5173
+
+# File upload
+spring.servlet.multipart.max-file-size=5MB
+spring.servlet.multipart.max-request-size=15MB

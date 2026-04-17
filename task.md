@@ -38,7 +38,7 @@ This system replaces the manual/paper-based processes currently in place and enf
 | Layer | Technology |
 |---|---|
 | Backend | Java 17 + Spring Boot 3.x |
-| Frontend | React 18 (Create React App) |
+| Frontend | React 18 (Vite) |
 | Database | MySQL 8.x |
 | Authentication | Spring Security + OAuth 2.0 (Google) + JWT |
 | File Storage | Local filesystem / AWS S3 (optional) |
@@ -167,7 +167,7 @@ The original assignment defines **Modules A–E**. Below is how each module maps
 ┌────────────────────────────────────────────────────────────┐
 │                      CLIENT LAYER                          │
 │   ┌──────────────────────────────────────────────────┐    │
-│   │         React Web Application (Create React App)             │    │
+│   │         React Web Application (Vite + React 18)          │    │
 │   │  (runs in user's browser, served via Nginx) │    │
 │   └───────────────────┬──────────────────────────────┘    │
 └───────────────────────┼────────────────────────────────────┘
@@ -232,22 +232,26 @@ Cross-cutting concerns:
 └── DTOs (Request/Response objects, MapStruct)
 ```
 
-### 5.3 React Frontend Architecture
+### 5.3 React Frontend Architecture (Vite)
 
 ```
-src/
-├── api/              ← Axios instances + API call functions
-├── components/       ← Reusable UI components
-│   ├── common/       ← Navbar, Sidebar, Notification Bell, etc.
-│   ├── parking/      ← Parking-specific components
-│   ├── helmets/      ← Helmet-specific components
-│   └── tickets/      ← Incident ticket components
-├── pages/            ← Route-level page components
-├── context/          ← AuthContext, NotificationContext
-├── hooks/            ← Custom hooks (useAuth, useBooking, etc.)
-├── routes/           ← Protected route wrappers
-├── utils/            ← Helper functions, formatters
-└── assets/           ← Images, icons
+smart-campus-frontend/
+├── index.html        ← Vite HTML root (references /src/main.jsx)
+├── vite.config.js    ← Vite config (proxy, alias, plugins)
+└── src/
+    ├── main.jsx      ← ReactDOM.createRoot entry point
+    ├── App.jsx       ← Router + layout
+    ├── api/          ← Axios instances + API call functions
+    ├── components/   ← Reusable UI components
+    │   ├── common/   ← Navbar, Sidebar, Notification Bell, etc.
+    │   ├── parking/  ← Parking-specific components
+    │   ├── helmets/  ← Helmet-specific components
+    │   └── tickets/  ← Incident ticket components
+    ├── pages/        ← Route-level page components
+    ├── context/      ← AuthContext, NotificationContext
+    ├── hooks/        ← Custom hooks (useAuth, useBooking, etc.)
+    ├── routes/       ← Protected route wrappers
+    └── utils/        ← Helper functions, formatters
 ```
 
 ---
@@ -614,13 +618,13 @@ CREATE TABLE notifications (
 - `HelmetController.java`, `HelmetService.java`, `HelmetRepository.java`, `Helmet.java` — same structure for helmets
 
 #### 🎨 React UI Components to Implement
-- `pages/parking/ParkingCataloguePage.js` — grid/list view of all parking slots
-- `pages/helmets/HelmetCataloguePage.js` — grid/list view of all helmets
-- `components/parking/SlotCard.js` — individual slot display card
-- `components/parking/SlotFilterBar.js` — filter by zone, type, status
-- `components/helmets/HelmetCard.js` — individual helmet display card
-- `components/helmets/HelmetFilterBar.js` — filter by size, condition
-- Admin forms: Add/Edit Parking Slot modal, Add/Edit Helmet modal (inside `pages/admin/ResourceManagementPage.js`)
+- `pages/parking/ParkingCataloguePage.jsx` — grid/list view of all parking slots
+- `pages/helmets/HelmetCataloguePage.jsx` — grid/list view of all helmets
+- `components/parking/SlotCard.jsx` — individual slot display card
+- `components/parking/SlotFilterBar.jsx` — filter by zone, type, status
+- `components/helmets/HelmetCard.jsx` — individual helmet display card
+- `components/helmets/HelmetFilterBar.jsx` — filter by size, condition
+- Admin forms: Add/Edit Parking Slot modal, Add/Edit Helmet modal (inside `pages/admin/ResourceManagementPage.jsx`)
 
 #### ✅ Minimum HTTP Methods Used
 `GET` ✅ `POST` ✅ `PUT` ✅ `PATCH` ✅ `DELETE` ✅ *(exceeds minimum of 4)*
@@ -680,12 +684,12 @@ CREATE TABLE notifications (
 - `BookingConflictException.java` — custom exception for 409 Conflict responses
 
 #### 🎨 React UI Components to Implement
-- `pages/parking/MyBookingsPage.js` — user's own booking history with status badges
-- `pages/parking/AdminBookingsPage.js` — admin table with approve/reject/cancel actions
-- `components/parking/BookingForm.js` — booking request form with date/time pickers
-- `pages/helmets/MyBorrowingsPage.js` — user's borrow history
-- `pages/helmets/AdminBorrowingsPage.js` — admin helmet issue/return management
-- `components/helmets/BorrowForm.js` — helmet borrow request form
+- `pages/parking/MyBookingsPage.jsx` — user's own booking history with status badges
+- `pages/parking/AdminBookingsPage.jsx` — admin table with approve/reject/cancel actions
+- `components/parking/BookingForm.jsx` — booking request form with date/time pickers
+- `pages/helmets/MyBorrowingsPage.jsx` — user's borrow history
+- `pages/helmets/AdminBorrowingsPage.jsx` — admin helmet issue/return management
+- `components/helmets/BorrowForm.jsx` — helmet borrow request form
 
 #### ✅ Minimum HTTP Methods Used
 `GET` ✅ `POST` ✅ `PATCH` ✅ *(minimum 4 endpoints met; 13 total)*
@@ -747,13 +751,13 @@ CREATE TABLE notifications (
 - `FileStorageException.java` — custom exception
 
 #### 🎨 React UI Components to Implement
-- `pages/tickets/TicketListPage.js` — filterable ticket list for all roles
-- `pages/tickets/CreateTicketPage.js` — report incident form with resource selector and image upload
-- `pages/tickets/TicketDetailPage.js` — full ticket view with status, assignee, comments
-- `components/tickets/TicketCard.js` — compact ticket summary card
-- `components/tickets/TicketStatusStepper.js` — visual workflow: OPEN → IN_PROGRESS → RESOLVED → CLOSED
-- `components/tickets/AttachmentUploader.js` — drag-and-drop image upload (max 3 files)
-- `components/tickets/CommentThread.js` — threaded comments with edit/delete for own comments
+- `pages/tickets/TicketListPage.jsx` — filterable ticket list for all roles
+- `pages/tickets/CreateTicketPage.jsx` — report incident form with resource selector and image upload
+- `pages/tickets/TicketDetailPage.jsx` — full ticket view with status, assignee, comments
+- `components/tickets/TicketCard.jsx` — compact ticket summary card
+- `components/tickets/TicketStatusStepper.jsx` — visual workflow: OPEN → IN_PROGRESS → RESOLVED → CLOSED
+- `components/tickets/AttachmentUploader.jsx` — drag-and-drop image upload (max 3 files)
+- `components/tickets/CommentThread.jsx` — threaded comments with edit/delete for own comments
 
 #### ✅ Minimum HTTP Methods Used
 `GET` ✅ `POST` ✅ `PUT` ✅ `PATCH` ✅ `DELETE` ✅ *(exceeds minimum of 4)*
@@ -821,15 +825,15 @@ CREATE TABLE notifications (
 > **Note:** `NotificationService` is used by **all other members' services** to dispatch notifications. Coordinate with Members 1–3 to inject and call this service when booking/ticket status changes occur.
 
 #### 🎨 React UI Components to Implement
-- `pages/LoginPage.js` — Google OAuth login button and landing page
-- `context/AuthContext.js` — global auth state (user, token, login/logout)
-- `context/NotificationContext.js` — global notification state (unread count, fetch)
-- `routes/ProtectedRoute.js` — redirects unauthenticated users to login
-- `routes/AdminRoute.js` — redirects non-admin users to dashboard
-- `components/common/NotificationBell.js` — header bell icon with unread badge
-- `pages/notifications/NotificationsPage.js` — full notification list with mark-read/delete
-- `pages/admin/UserManagementPage.js` — admin table to view users and change roles
-- `pages/admin/AdminDashboardPage.js` — summary cards (total bookings, open tickets, etc.)
+- `pages/LoginPage.jsx` — Google OAuth login button and landing page
+- `context/AuthContext.jsx` — global auth state (user, token, login/logout)
+- `context/NotificationContext.jsx` — global notification state (unread count, fetch)
+- `routes/ProtectedRoute.jsx` — redirects unauthenticated users to login
+- `routes/AdminRoute.jsx` — redirects non-admin users to dashboard
+- `components/common/NotificationBell.jsx` — header bell icon with unread badge
+- `pages/notifications/NotificationsPage.jsx` — full notification list with mark-read/delete
+- `pages/admin/UserManagementPage.jsx` — admin table to view users and change roles
+- `pages/admin/AdminDashboardPage.jsx` — summary cards (total bookings, open tickets, etc.)
 
 #### ✅ Minimum HTTP Methods Used
 `GET` ✅ `POST` ✅ `PATCH` ✅ `DELETE` ✅ *(exceeds minimum of 4)*
@@ -866,10 +870,11 @@ CREATE TABLE notifications (
 
 ```
 smart-campus-frontend/
-├── public/
-│   └── index.html
+├── index.html                     ← Vite HTML entry point (root)
+├── vite.config.js                 ← Vite configuration
 ├── src/
-│   ├── index.js                   ← Entry point (Create React App)
+│   ├── main.jsx                   ← Entry point (Vite)
+│   ├── App.jsx                    ← Route definitions
 │   ├── api/
 │   │   ├── axiosInstance.js       ← Base Axios config with JWT interceptor
 │   │   ├── authApi.js
@@ -880,8 +885,8 @@ smart-campus-frontend/
 │   │   └── notificationApi.js
 │   │
 │   ├── context/
-│   │   ├── AuthContext.js        ← Current user, login/logout
-│   │   └── NotificationContext.js← Unread count, fetch notifications
+│   │   ├── AuthContext.jsx        ← Current user, login/logout
+│   │   └── NotificationContext.jsx← Unread count, fetch notifications
 │   │
 │   ├── hooks/
 │   │   ├── useAuth.js
@@ -889,59 +894,56 @@ smart-campus-frontend/
 │   │   └── useNotifications.js
 │   │
 │   ├── routes/
-│   │   ├── ProtectedRoute.js     ← Redirect to login if not authed
-│   │   └── AdminRoute.js         ← Redirect if not ADMIN
+│   │   ├── ProtectedRoute.jsx     ← Redirect to login if not authed
+│   │   └── AdminRoute.jsx         ← Redirect if not ADMIN
 │   │
 │   ├── components/
 │   │   ├── common/
-│   │   │   ├── Navbar.js
-│   │   │   ├── Sidebar.js
-│   │   │   ├── NotificationBell.js
-│   │   │   ├── StatusBadge.js
-│   │   │   └── ConfirmModal.js
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── Sidebar.jsx
+│   │   │   ├── NotificationBell.jsx
+│   │   │   ├── StatusBadge.jsx
+│   │   │   └── ConfirmModal.jsx
 │   │   ├── parking/
-│   │   │   ├── SlotCard.js
-│   │   │   ├── SlotFilterBar.js
-│   │   │   └── BookingForm.js
+│   │   │   ├── SlotCard.jsx
+│   │   │   ├── SlotFilterBar.jsx
+│   │   │   └── BookingForm.jsx
 │   │   ├── helmets/
-│   │   │   ├── HelmetCard.js
-│   │   │   ├── HelmetFilterBar.js
-│   │   │   └── BorrowForm.js
+│   │   │   ├── HelmetCard.jsx
+│   │   │   ├── HelmetFilterBar.jsx
+│   │   │   └── BorrowForm.jsx
 │   │   └── tickets/
-│   │       ├── TicketCard.js
-│   │       ├── TicketStatusStepper.js
-│   │       ├── AttachmentUploader.js
-│   │       └── CommentThread.js
+│   │       ├── TicketCard.jsx
+│   │       ├── TicketStatusStepper.jsx
+│   │       ├── AttachmentUploader.jsx
+│   │       └── CommentThread.jsx
 │   │
 │   ├── pages/
-│   │   ├── LoginPage.js
-│   │   ├── DashboardPage.js
+│   │   ├── LoginPage.jsx
+│   │   ├── DashboardPage.jsx
 │   │   ├── parking/
-│   │   │   ├── ParkingCataloguePage.js
-│   │   │   ├── MyBookingsPage.js
-│   │   │   └── AdminBookingsPage.js
+│   │   │   ├── ParkingCataloguePage.jsx
+│   │   │   ├── MyBookingsPage.jsx
+│   │   │   └── AdminBookingsPage.jsx
 │   │   ├── helmets/
-│   │   │   ├── HelmetCataloguePage.js
-│   │   │   ├── MyBorrowingsPage.js
-│   │   │   └── AdminBorrowingsPage.js
+│   │   │   ├── HelmetCataloguePage.jsx
+│   │   │   ├── MyBorrowingsPage.jsx
+│   │   │   └── AdminBorrowingsPage.jsx
 │   │   ├── tickets/
-│   │   │   ├── TicketListPage.js
-│   │   │   ├── TicketDetailPage.js
-│   │   │   └── CreateTicketPage.js
+│   │   │   ├── TicketListPage.jsx
+│   │   │   ├── TicketDetailPage.jsx
+│   │   │   └── CreateTicketPage.jsx
 │   │   ├── notifications/
-│   │   │   └── NotificationsPage.js
+│   │   │   └── NotificationsPage.jsx
 │   │   └── admin/
-│   │       ├── AdminDashboardPage.js
-│   │       ├── UserManagementPage.js
-│   │       └── ResourceManagementPage.js
+│   │       ├── AdminDashboardPage.jsx
+│   │       ├── UserManagementPage.jsx
+│   │       └── ResourceManagementPage.jsx
 │   │
-│   ├── utils/
-│   │   ├── dateFormatter.js
-│   │   ├── roleHelper.js
-│   │   └── constants.js
-│   │
-│   ├── App.js                     ← Route definitions
-│   └── index.js                   ← Entry point
+│   └── utils/
+│       ├── dateFormatter.js
+│       ├── roleHelper.js
+│       └── constants.js
 │
 ├── .env
 └── package.json
@@ -1221,7 +1223,7 @@ jobs:
         run: mvn clean verify
 
   frontend-build:
-    name: React Build
+    name: Vite React Build
     runs-on: ubuntu-latest
 
     steps:
@@ -1238,8 +1240,10 @@ jobs:
         working-directory: ./smart-campus-frontend
         run: npm ci
 
-      - name: Build React App
+      - name: Build Vite App
         working-directory: ./smart-campus-frontend
+        env:
+          VITE_API_BASE_URL: http://localhost:8080/api/v1
         run: npm run build
 ```
 
@@ -1371,18 +1375,18 @@ mvn spring-boot:run
 ```bash
 cd ../smart-campus-frontend
 cp .env.example .env
-# Set REACT_APP_API_BASE_URL=http://localhost:8080/api/v1
+# Set VITE_API_BASE_URL=http://localhost:8080/api/v1
 ```
 
 ### Step 6: Run Frontend
 ```bash
 npm install
-npm start
-# App available at http://localhost:3000
+npm run dev
+# App available at http://localhost:5173
 ```
 
 ### Step 7: Access the App
-1. Go to `http://localhost:3000`
+1. Go to `http://localhost:5173`
 2. Click **Login with Google**
 3. Complete OAuth flow
 4. First user can be manually set as ADMIN via direct DB update:

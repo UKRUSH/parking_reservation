@@ -1,0 +1,17 @@
+# Backend secrets - NEVER commit these
+Backend/src/main/resources/application.properties
+
+# Backend build
+Backend/target/
+Backend/.mvn/
+
+# Frontend
+Frontend/node_modules/
+Frontend/dist/
+Frontend/.env
+Frontend/.env.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
