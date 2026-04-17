@@ -1,0 +1,63 @@
+import { useAuth } from '../../context/AuthContext'
+import { useNotifications } from '../../context/NotificationContext'
+import { useNavigate } from 'react-router-dom'
+import NotificationBell from '../../components/common/NotificationBell'
+
+function StatCard({ title, value, color }) {
+  return (
+    <div className={`bg-white rounded-xl p-6 shadow-sm border-l-4 ${color}`}>
+      <p className="text-sm text-gray-500">{title}</p>
+      <p className="text-3xl font-bold text-gray-800 mt-1">{value}</p>
+    </div>
+  )
+}
+
+export default function AdminDashboardPage() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Navbar */}
+      <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
+        <h1 className="text-xl font-bold text-gray-800">Smart Campus — Admin</h1>
+        <div className="flex items-center gap-4">
+          <NotificationBell />
+          <span className="text-sm text-gray-600">{user?.name}</span>
+          <button onClick={logout} className="text-sm text-red-500 hover:underline">Logout</button>
+        </div>
+      </nav>
+
+      <div className="max-w-5xl mx-auto p-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-6">Dashboard</h2>
+
+        {/* Summary cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <StatCard title="Total Users" value="—" color="border-blue-500" />
+          <StatCard title="Active Bookings" value="—" color="border-green-500" />
+          <StatCard title="Open Tickets" value="—" color="border-yellow-500" />
+          <StatCard title="Helmets Available" value="—" color="border-purple-500" />
+        </div>
+
+        {/* Quick links */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <button onClick={() => navigate('/admin/users')}
+            className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition text-left">
+            <p className="font-semibold text-gray-800">User Management</p>
+            <p className="text-sm text-gray-500 mt-1">View and manage user roles</p>
+          </button>
+          <button onClick={() => navigate('/notifications')}
+            className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition text-left">
+            <p className="font-semibold text-gray-800">Notifications</p>
+            <p className="text-sm text-gray-500 mt-1">View system notifications</p>
+          </button>
+          <button onClick={() => navigate('/parking')}
+            className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition text-left">
+            <p className="font-semibold text-gray-800">Parking Slots</p>
+            <p className="text-sm text-gray-500 mt-1">Manage parking catalogue</p>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
