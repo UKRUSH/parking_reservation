@@ -9,7 +9,10 @@ import LoginPage from './pages/LoginPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import UserManagementPage from './pages/admin/UserManagementPage'
+import AdminBookingsPage from './pages/parking/AdminBookingsPage'
 import StudentDashboardPage from './pages/student/StudentDashboardPage'
+import MyBookingsPage from './pages/parking/MyBookingsPage'
+import ParkingSlotsPage from './pages/parking/ParkingSlotsPage'
 import NotificationsPage from './pages/notifications/NotificationsPage'
 
 // Redirects to the right dashboard based on role
@@ -40,6 +43,12 @@ export default function App() {
             <Route path="/student/dashboard" element={
               <StudentRoute><StudentDashboardPage /></StudentRoute>
             } />
+            <Route path="/my-bookings" element={
+              <StudentRoute><MyBookingsPage /></StudentRoute>
+            } />
+            <Route path="/parking" element={
+              <ProtectedRoute><ParkingSlotsPage /></ProtectedRoute>
+            } />
             <Route path="/notifications" element={
               <ProtectedRoute><NotificationsPage /></ProtectedRoute>
             } />
@@ -50,6 +59,9 @@ export default function App() {
             } />
             <Route path="/admin/users" element={
               <AdminRoute><UserManagementPage /></AdminRoute>
+            } />
+            <Route path="/admin/bookings" element={
+              <AdminRoute><AdminBookingsPage /></AdminRoute>
             } />
           </Routes>
         </NotificationProvider>
