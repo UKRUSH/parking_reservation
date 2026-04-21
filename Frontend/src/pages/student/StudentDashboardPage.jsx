@@ -1,18 +1,6 @@
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 import NotificationBell from '../../components/common/NotificationBell'
-
-function QuickCard({ title, description, onClick, color }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition text-left border-l-4 ${color}`}
-    >
-      <p className="font-semibold text-gray-800">{title}</p>
-      <p className="text-sm text-gray-500 mt-1">{description}</p>
-    </button>
-  )
-}
 
 export default function StudentDashboardPage() {
   const { user, logout } = useAuth()
@@ -26,41 +14,62 @@ export default function StudentDashboardPage() {
         <div className="flex items-center gap-4">
           <NotificationBell />
           <span className="text-sm text-gray-600">{user?.name}</span>
-          <button onClick={logout} className="text-sm text-red-500 hover:underline">
-            Logout
-          </button>
+          <button onClick={logout} className="text-sm text-red-500 hover:underline">Logout</button>
         </div>
       </nav>
 
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto px-6 py-10">
         {/* Welcome */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-800">
-            Welcome, {user?.name?.split(' ')[0]}
+            Welcome, {user?.name?.split(' ')[0]} 👋
           </h2>
-          <p className="text-gray-500 text-sm mt-1">Manage your parking bookings and notifications</p>
+          <p className="text-gray-500 mt-1">Manage your campus parking from here.</p>
         </div>
 
-        {/* Quick links */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <QuickCard
-            title="Book a Parking Slot"
-            description="Browse available slots and submit a booking request"
-            onClick={() => navigate('/parking')}
-            color="border-blue-500"
-          />
-          <QuickCard
-            title="My Bookings"
-            description="View booking history and status"
+        {/* Quick action cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <button
             onClick={() => navigate('/my-bookings')}
-            color="border-green-500"
-          />
-          <QuickCard
-            title="Notifications"
-            description="Booking approvals, rejections, system alerts"
+            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-left hover:shadow-md hover:border-blue-200 transition group"
+          >
+            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4 group-hover:bg-blue-100 transition">
+              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-gray-800 text-lg">My Bookings</h3>
+            <p className="text-gray-500 text-sm mt-1">View and manage your parking reservations</p>
+          </button>
+
+          <button
             onClick={() => navigate('/notifications')}
-            color="border-yellow-500"
-          />
+            className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-left hover:shadow-md hover:border-purple-200 transition group"
+          >
+            <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center mb-4 group-hover:bg-purple-100 transition">
+              <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            </div>
+            <h3 className="font-semibold text-gray-800 text-lg">Notifications</h3>
+            <p className="text-gray-500 text-sm mt-1">Check booking approvals and reminders</p>
+          </button>
+        </div>
+
+        {/* Profile card */}
+        <div className="mt-6 bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <h3 className="font-semibold text-gray-700 mb-3">Account</h3>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-lg">
+              {user?.name?.[0]?.toUpperCase() ?? '?'}
+            </div>
+            <div>
+              <p className="font-medium text-gray-800">{user?.name}</p>
+              <p className="text-sm text-gray-500">{user?.email}</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

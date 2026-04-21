@@ -3,21 +3,23 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { NotificationProvider } from './context/NotificationContext'
 import ProtectedRoute from './routes/ProtectedRoute'
 import AdminRoute from './routes/AdminRoute'
+import StudentRoute from './routes/StudentRoute'
+
 import LoginPage from './pages/LoginPage'
 import AuthCallbackPage from './pages/AuthCallbackPage'
 import AdminDashboardPage from './pages/admin/AdminDashboardPage'
 import UserManagementPage from './pages/admin/UserManagementPage'
-import NotificationsPage from './pages/notifications/NotificationsPage'
-import MyBookingsPage from './pages/parking/MyBookingsPage'
-import AdminBookingsPage from './pages/parking/AdminBookingsPage'
-import ParkingSlotsPage from './pages/parking/ParkingSlotsPage'
 import StudentDashboardPage from './pages/student/StudentDashboardPage'
+import NotificationsPage from './pages/notifications/NotificationsPage'
 
-function HomeRedirect() {
-  const { user, loading } = useAuth()
-  if (loading) return null
+// Redirects to the right dashboard based on role
+function RoleRedirect() {
+  const { user, loading, hasRole } = useAuth()
+  if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>
   if (!user) return <Navigate to="/login" replace />
-  return <Navigate to={user.roles?.includes('ADMIN') ? '/dashboard' : '/student-dashboard'} replace />
+  return hasRole('ADMIN')
+    ? <Navigate to="/admin/dashboard" replace />
+    : <Navigate to="/student/dashboard" replace />
 }
 
 export default function App() {
@@ -30,43 +32,25 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
 
-            {/* Admin dashboard */}
-            <Route path="/dashboard" element={
-              <AdminRoute><AdminDashboardPage /></AdminRoute>
-            } />
+            {/* Role-based root redirect */}
+            <Route path="/" element={<RoleRedirect />} />
+            <Route path="/dashboard" element={<RoleRedirect />} />
 
-            {/* Student dashboard */}
-            <Route path="/student-dashboard" element={
-              <ProtectedRoute><StudentDashboardPage /></ProtectedRoute>
+            {/* Student routes */}
+            <Route path="/student/dashboard" element={
+              <StudentRoute><StudentDashboardPage /></StudentRoute>
             } />
-
             <Route path="/notifications" element={
               <ProtectedRoute><NotificationsPage /></ProtectedRoute>
             } />
 
-            {/* Parking bookings — any authenticated user */}
-            <Route path="/my-bookings" element={
-              <ProtectedRoute><MyBookingsPage /></ProtectedRoute>
+            {/* Admin routes */}
+            <Route path="/admin/dashboard" element={
+              <AdminRoute><AdminDashboardPage /></AdminRoute>
             } />
-
-            {/* Parking slots — students request, admins view */}
-            <Route path="/parking" element={
-              <ProtectedRoute><ParkingSlotsPage /></ProtectedRoute>
-            } />
-
-            {/* Admin only */}
             <Route path="/admin/users" element={
               <AdminRoute><UserManagementPage /></AdminRoute>
             } />
-            <Route path="/admin/bookings" element={
-              <AdminRoute><AdminBookingsPage /></AdminRoute>
-            } />
-
-            {/* Alias: /admin → /dashboard */}
-            <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
-
-            {/* Default redirect — role-aware */}
-            <Route path="/" element={<HomeRedirect />} />
           </Routes>
         </NotificationProvider>
       </AuthProvider>
