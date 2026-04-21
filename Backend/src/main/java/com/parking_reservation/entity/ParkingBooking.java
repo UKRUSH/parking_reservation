@@ -40,6 +40,12 @@ public class ParkingBooking {
 
     private String rejectionReason;
 
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean endingSoonNotified = false;
+
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean endedNotified = false;
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

@@ -2,6 +2,7 @@ package com.parking_reservation.service;
 
 import com.parking_reservation.dto.request.ParkingBookingRequest;
 import com.parking_reservation.dto.response.ParkingBookingResponse;
+import com.parking_reservation.entity.NotificationType;
 import com.parking_reservation.entity.ParkingBooking;
 import com.parking_reservation.entity.ParkingBooking.BookingStatus;
 import com.parking_reservation.entity.ParkingSlot;
@@ -26,6 +27,7 @@ public class ParkingBookingService {
     private final ParkingBookingRepository bookingRepository;
     private final ParkingSlotRepository slotRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<ParkingBookingResponse> getBookingsForUser(Long userId) {
@@ -80,7 +82,15 @@ public class ParkingBookingService {
         ParkingBooking booking = findBooking(bookingId);
         assertStatus(booking, BookingStatus.PENDING, "Only PENDING bookings can be approved");
         booking.setStatus(BookingStatus.APPROVED);
-        return ParkingBookingResponse.from(bookingRepository.save(booking));
+        ParkingBookingResponse response = ParkingBookingResponse.from(bookingRepository.save(booking));
+        notificationService.send(
+                booking.getUser().getId(),
+                NotificationType.BOOKING_APPROVED,
+                "Booking Confirmed",
+                "Your booking for slot " + booking.getSlot().getSlotNumber() +
+                " (Zone " + booking.getSlot().getZone() + ") has been approved."
+        );
+        return response;
     }
 
     @Transactional
@@ -89,7 +99,15 @@ public class ParkingBookingService {
         assertStatus(booking, BookingStatus.PENDING, "Only PENDING bookings can be rejected");
         booking.setStatus(BookingStatus.REJECTED);
         booking.setRejectionReason(reason);
-        return ParkingBookingResponse.from(bookingRepository.save(booking));
+        ParkingBookingResponse response = ParkingBookingResponse.from(bookingRepository.save(booking));
+        notificationService.send(
+                booking.getUser().getId(),
+                NotificationType.BOOKING_REJECTED,
+                "Booking Rejected",
+                "Your booking for slot " + booking.getSlot().getSlotNumber() +
+                " (Zone " + booking.getSlot().getZone() + ") was rejected. Reason: " + reason
+        );
+        return response;
     }
 
     @Transactional
@@ -99,7 +117,25 @@ public class ParkingBookingService {
             throw new IllegalArgumentException("Booking cannot be cancelled in its current state");
         }
         booking.setStatus(BookingStatus.CANCELLED);
-        return ParkingBookingResponse.from(bookingRepository.save(booking));
+        ParkingBookingResponse response = ParkingBookingResponse.from(bookingRepository.save(booking));
+        notificationService.send(
+                booking.getUser().getId(),
+                NotificationType.BOOKING_CANCELLED,
+                "Booking Cancelled",
+                "Your booking for slot " + booking.getSlot().getSlotNumber() +
+                " (Zone " + booking.getSlot().getZone() + ") has been cancelled."
+        );
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ParkingBookingResponse> getUpcomingBookingsForSlot(Long slotId) {
+        LocalDateTime startOfToday = LocalDateTime.now().toLocalDate().atStartOfDay();
+        return bookingRepository.findUpcomingBySlotId(
+                        slotId, BookingStatus.CANCELLED, BookingStatus.REJECTED, startOfToday)
+                .stream()
+                .map(ParkingBookingResponse::from)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)

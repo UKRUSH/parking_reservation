@@ -44,10 +44,16 @@ export default function StudentDashboardPage() {
         {/* Quick links */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <QuickCard
-            title="My Parking Bookings"
-            description="View history, request new booking, cancel"
-            onClick={() => navigate('/my-bookings')}
+            title="Book a Parking Slot"
+            description="Browse available slots and submit a booking request"
+            onClick={() => navigate('/parking')}
             color="border-blue-500"
+          />
+          <QuickCard
+            title="My Bookings"
+            description="View booking history and status"
+            onClick={() => navigate('/my-bookings')}
+            color="border-green-500"
           />
           <QuickCard
             title="Notifications"

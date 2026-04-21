@@ -7,6 +7,7 @@ export const parkingBookingApi = {
   approve: (id) => axiosInstance.patch(`/parking-bookings/${id}/approve`),
   reject: (id, reason) => axiosInstance.patch(`/parking-bookings/${id}/reject`, { reason }),
   cancel: (id) => axiosInstance.patch(`/parking-bookings/${id}/cancel`),
+  getBySlot: (slotId) => axiosInstance.get(`/parking-bookings/slot/${slotId}`),
   checkConflict: (slotId, startTime, endTime) =>
     axiosInstance.get('/parking-bookings/check-conflict', {
       params: { slotId, startTime, endTime },

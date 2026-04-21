@@ -59,11 +59,25 @@ function formatDateTime(dt) {
   return new Date(dt).toLocaleString()
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function formatTime(dt) {
+  return new Date(dt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+function formatDateShort(dt) {
+  return new Date(dt).toLocaleDateString([], { month: 'short', day: 'numeric' })
+}
+
+
+function localDateStr(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 // ── Booking form modal ────────────────────────────────────────────────────────
 function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
   const vehicleLabel = VEHICLE_TYPES.find(v => v.id === vehicleType)?.label ?? vehicleType
 
-  const todayStr = new Date().toISOString().slice(0, 10)
+  const todayStr  = localDateStr()
+  const maxDateStr = localDateStr(new Date(Date.now() + 2 * 24 * 60 * 60 * 1000))
 
   // Default start = next full hour; end = start + 2 h
   const defaultTimes = () => {
@@ -84,18 +98,38 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
     endTime: defEnd,
     purpose: '',
   })
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState(null)
+  const [submitting, setSubmitting]     = useState(false)
+  const [error, setError]               = useState(null)
+  const [slotBookings, setSlotBookings] = useState([])
+  const [loadingSlot, setLoadingSlot]   = useState(true)
+  const [slotError, setSlotError]       = useState(null)
+
+  const fetchSlotBookings = () => {
+    setLoadingSlot(true)
+    setSlotError(null)
+    parkingBookingApi.getBySlot(slot.id)
+      .then(res => setSlotBookings(res.data.data || []))
+      .catch(err => setSlotError(err.response?.status === 404 ? 'Endpoint not found — restart the backend.' : 'Could not load schedule.'))
+      .finally(() => setLoadingSlot(false))
+  }
+
+  useEffect(() => { fetchSlotBookings() }, [slot.id])
 
   const set = (field, value) => setForm(f => ({ ...f, [field]: value }))
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!form.vehicleNumber.trim()) { setError('Vehicle number is required'); return }
+    if (!/^[A-Z]{2,3} [0-9]{4}$/.test(form.vehicleNumber)) {
+      setError('Enter a valid plate: 2–3 letters then 4 digits (e.g. AB 1234 or CAB 5678)')
+      return
+    }
 
     const startDT = `${form.date}T${form.startTime}:00`
     const endDT   = `${form.date}T${form.endTime}:00`
 
+    if (form.date < todayStr || form.date > maxDateStr) {
+      setError('Bookings are only allowed within the next 2 days'); return
+    }
     if (endDT <= startDT) { setError('End time must be after start time'); return }
     if (new Date(startDT) < new Date()) { setError('Start time cannot be in the past'); return }
 
@@ -106,7 +140,7 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
         slotId: slot.id,
         startTime: startDT,
         endTime: endDT,
-        vehicleNumber: form.vehicleNumber.trim().toUpperCase(),
+        vehicleNumber: form.vehicleNumber,
         purpose: form.purpose.trim() || `${vehicleLabel} parking`,
       })
       onBooked()
@@ -119,134 +153,190 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
           <h2 className="text-lg font-bold text-gray-800">Reserve Parking Slot</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl font-bold">✕</button>
         </div>
 
-        {/* Slot info banner */}
-        <div className="mx-6 mt-4 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center gap-4">
-          <span className="text-2xl font-extrabold text-blue-700">{slot.slotNumber}</span>
-          <div className="text-sm text-blue-800 leading-tight">
-            <div>Zone <strong>{slot.zone}</strong></div>
-            <div className="text-blue-500">{vehicleLabel} parking</div>
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="px-6 pb-6 pt-4 space-y-4">
-
-          {/* Vehicle number */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Vehicle Number <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. WXX 1234"
-              value={form.vehicleNumber}
-              onChange={e => set('vehicleNumber', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          {/* Date */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              min={todayStr}
-              value={form.date}
-              onChange={e => set('date', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          {/* Start / End time */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Start Time <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="time"
-                value={form.startTime}
-                onChange={e => set('startTime', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                End Time <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="time"
-                value={form.endTime}
-                onChange={e => set('endTime', e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required
-              />
+        <div className="overflow-y-auto flex-1">
+          {/* Slot info banner */}
+          <div className="mx-6 mt-4 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex items-center gap-4">
+            <span className="text-2xl font-extrabold text-blue-700">{slot.slotNumber}</span>
+            <div className="text-sm text-blue-800 leading-tight">
+              <div>Zone <strong>{slot.zone}</strong></div>
+              <div className="text-blue-500">{vehicleLabel} parking</div>
             </div>
           </div>
 
-          {/* Duration hint */}
-          {form.startTime && form.endTime && form.startTime < form.endTime && (
-            <p className="text-xs text-gray-500">
-              Duration: {(() => {
-                const [sh, sm] = form.startTime.split(':').map(Number)
-                const [eh, em] = form.endTime.split(':').map(Number)
-                const mins = (eh * 60 + em) - (sh * 60 + sm)
-                if (mins <= 0) return '—'
-                const h = Math.floor(mins / 60), m = mins % 60
-                return h > 0 ? `${h}h ${m > 0 ? m + 'm' : ''}` : `${m}m`
-              })()}
+          {/* ── Slot booking times ── */}
+          <div className="mx-6 mt-4">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              Slot Schedule
             </p>
-          )}
 
-          {/* Purpose (optional) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Purpose <span className="text-gray-400 font-normal">(optional)</span>
-            </label>
-            <input
-              type="text"
-              placeholder={`${vehicleLabel} parking`}
-              value={form.purpose}
-              onChange={e => set('purpose', e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            {loadingSlot ? (
+              <p className="text-xs text-gray-400 py-2">Loading schedule...</p>
+            ) : slotError ? (
+              <div className="flex items-center gap-2 py-1">
+                <p className="text-xs text-red-500">{slotError}</p>
+                <button onClick={fetchSlotBookings} className="text-xs text-blue-500 hover:underline shrink-0">Retry</button>
+              </div>
+            ) : slotBookings.length === 0 ? (
+              <p className="text-xs text-green-600 py-1">No upcoming bookings — slot is fully available.</p>
+            ) : (
+              <div className="space-y-1 max-h-44 overflow-y-auto pr-1">
+                {(() => {
+                  // Group bookings by local date
+                  const groups = {}
+                  slotBookings.forEach(b => {
+                    const key = localDateStr(new Date(b.startTime))
+                    if (!groups[key]) groups[key] = []
+                    groups[key].push(b)
+                  })
+                  return Object.entries(groups).map(([dateKey, items]) => (
+                    <div key={dateKey}>
+                      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mt-2 mb-0.5">
+                        {new Date(`${dateKey}T12:00:00`).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}
+                      </p>
+                      {items.map(b => (
+                        <div
+                          key={b.id}
+                          className="bg-red-50 border border-red-100 rounded-lg px-3 py-1.5 text-xs font-mono text-red-700"
+                        >
+                          {formatTime(b.startTime)} — {formatTime(b.endTime)}
+                        </div>
+                      ))}
+                    </div>
+                  ))
+                })()}
+              </div>
+            )}
           </div>
 
-          {/* Error */}
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
-          )}
+          <form onSubmit={handleSubmit} className="px-6 pb-6 pt-4 space-y-4">
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-1">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-            >
-              {submitting ? 'Submitting...' : 'Confirm Booking'}
-            </button>
-          </div>
-        </form>
+            {/* Vehicle number — Sri Lankan format: 2–3 letters + 4 digits */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Vehicle Number <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. AB 1234 or CAB 5678"
+                value={form.vehicleNumber}
+                onChange={e => {
+                  const raw = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '')
+                  let letters = '', digits = '', i = 0
+                  while (i < raw.length && /[A-Z]/.test(raw[i]) && letters.length < 3) letters += raw[i++]
+                  while (i < raw.length && /[0-9]/.test(raw[i]) && digits.length < 4) digits += raw[i++]
+                  set('vehicleNumber', digits.length > 0 ? `${letters} ${digits}` : letters)
+                }}
+                maxLength={8}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+              <p className="text-[11px] text-gray-400 mt-1">2–3 letters followed by 4 digits &nbsp;·&nbsp; e.g. AB 1234</p>
+            </div>
+
+            {/* Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Date <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                min={todayStr}
+                max={maxDateStr}
+                value={form.date}
+                onChange={e => set('date', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            {/* Start / End time */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Time <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="time"
+                  value={form.startTime}
+                  onChange={e => set('startTime', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  End Time <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="time"
+                  value={form.endTime}
+                  onChange={e => set('endTime', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Duration hint */}
+            {form.startTime && form.endTime && form.startTime < form.endTime && (
+              <p className="text-xs text-gray-500">
+                Duration: {(() => {
+                  const [sh, sm] = form.startTime.split(':').map(Number)
+                  const [eh, em] = form.endTime.split(':').map(Number)
+                  const mins = (eh * 60 + em) - (sh * 60 + sm)
+                  if (mins <= 0) return '—'
+                  const h = Math.floor(mins / 60), m = mins % 60
+                  return h > 0 ? `${h}h ${m > 0 ? m + 'm' : ''}` : `${m}m`
+                })()}
+              </p>
+            )}
+
+            {/* Purpose (optional) */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Purpose <span className="text-gray-400 font-normal">(optional)</span>
+              </label>
+              <input
+                type="text"
+                placeholder={`${vehicleLabel} parking`}
+                value={form.purpose}
+                onChange={e => set('purpose', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* Error */}
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+            )}
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg text-sm font-medium hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+              >
+                {submitting ? 'Submitting...' : 'Confirm Booking'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   )

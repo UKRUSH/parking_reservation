@@ -79,6 +79,13 @@ public class ParkingBookingController {
         return ResponseEntity.ok(ApiResponse.success("Booking cancelled", bookingService.cancelBooking(id)));
     }
 
+    // GET /api/v1/parking-bookings/slot/{slotId} — upcoming bookings for a slot (all authenticated users)
+    @GetMapping("/slot/{slotId}")
+    public ResponseEntity<ApiResponse<List<ParkingBookingResponse>>> getBookingsForSlot(
+            @PathVariable Long slotId) {
+        return ResponseEntity.ok(ApiResponse.success(bookingService.getUpcomingBookingsForSlot(slotId)));
+    }
+
     // GET /api/v1/parking-bookings/check-conflict
     @GetMapping("/check-conflict")
     public ResponseEntity<ApiResponse<Boolean>> checkConflict(

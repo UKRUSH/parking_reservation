@@ -24,6 +24,7 @@ export default function LoginPage() {
     e.preventDefault()
     setSubmitting(true)
     setError('')
+
     try {
       let res
       if (tab === 'login') {
@@ -32,7 +33,7 @@ export default function LoginPage() {
         res = await authApi.register({ name: form.name, email: form.email, password: form.password })
       }
       const { user: loggedInUser } = res.data.data
-      login(res.data.data)          // { token, user }
+      login(res.data.data)
       const dest = loggedInUser?.roles?.includes('ADMIN') ? '/dashboard' : '/student-dashboard'
       navigate(dest, { replace: true })
     } catch (err) {
@@ -41,6 +42,8 @@ export default function LoginPage() {
       setSubmitting(false)
     }
   }
+
+  const switchTab = (t) => { setTab(t); setError('') }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -55,14 +58,14 @@ export default function LoginPage() {
         {/* Tabs */}
         <div className="flex rounded-lg bg-gray-100 p-1 mb-6">
           <button
-            onClick={() => { setTab('login'); setError('') }}
+            onClick={() => switchTab('login')}
             className={`flex-1 py-2 rounded-md text-sm font-medium transition ${
               tab === 'login' ? 'bg-white shadow text-gray-800' : 'text-gray-500'}`}
           >
             Sign In
           </button>
           <button
-            onClick={() => { setTab('register'); setError('') }}
+            onClick={() => switchTab('register')}
             className={`flex-1 py-2 rounded-md text-sm font-medium transition ${
               tab === 'register' ? 'bg-white shadow text-gray-800' : 'text-gray-500'}`}
           >
@@ -70,7 +73,7 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* Form */}
+        {/* Sign in / Register form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           {tab === 'register' && (
             <div>

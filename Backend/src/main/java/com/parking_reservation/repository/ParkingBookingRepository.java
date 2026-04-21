@@ -34,4 +34,32 @@ public interface ParkingBookingRepository extends JpaRepository<ParkingBooking, 
             @Param("status") BookingStatus status,
             @Param("startTime") LocalDateTime startTime,
             @Param("endTime") LocalDateTime endTime);
+
+    @Query("SELECT b FROM ParkingBooking b " +
+           "WHERE b.slot.id = :slotId " +
+           "AND b.status != :cancelled " +
+           "AND b.status != :rejected " +
+           "AND b.startTime >= :from " +
+           "ORDER BY b.startTime ASC")
+    List<ParkingBooking> findUpcomingBySlotId(
+            @Param("slotId") Long slotId,
+            @Param("cancelled") BookingStatus cancelled,
+            @Param("rejected") BookingStatus rejected,
+            @Param("from") LocalDateTime from);
+
+    @Query("SELECT b FROM ParkingBooking b " +
+           "WHERE b.status = 'APPROVED' " +
+           "AND b.endingSoonNotified = false " +
+           "AND b.endTime >= :from AND b.endTime <= :to")
+    List<ParkingBooking> findEndingSoon(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
+
+    @Query("SELECT b FROM ParkingBooking b " +
+           "WHERE b.status = 'APPROVED' " +
+           "AND b.endedNotified = false " +
+           "AND b.endTime >= :from AND b.endTime <= :to")
+    List<ParkingBooking> findJustEnded(
+            @Param("from") LocalDateTime from,
+            @Param("to") LocalDateTime to);
 }

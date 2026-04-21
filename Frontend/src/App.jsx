@@ -10,6 +10,7 @@ import UserManagementPage from './pages/admin/UserManagementPage'
 import NotificationsPage from './pages/notifications/NotificationsPage'
 import MyBookingsPage from './pages/parking/MyBookingsPage'
 import AdminBookingsPage from './pages/parking/AdminBookingsPage'
+import ParkingSlotsPage from './pages/parking/ParkingSlotsPage'
 import StudentDashboardPage from './pages/student/StudentDashboardPage'
 
 function HomeRedirect() {
@@ -48,6 +49,11 @@ export default function App() {
               <ProtectedRoute><MyBookingsPage /></ProtectedRoute>
             } />
 
+            {/* Parking slots — students request, admins view */}
+            <Route path="/parking" element={
+              <ProtectedRoute><ParkingSlotsPage /></ProtectedRoute>
+            } />
+
             {/* Admin only */}
             <Route path="/admin/users" element={
               <AdminRoute><UserManagementPage /></AdminRoute>
@@ -55,6 +61,9 @@ export default function App() {
             <Route path="/admin/bookings" element={
               <AdminRoute><AdminBookingsPage /></AdminRoute>
             } />
+
+            {/* Alias: /admin → /dashboard */}
+            <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
 
             {/* Default redirect — role-aware */}
             <Route path="/" element={<HomeRedirect />} />
