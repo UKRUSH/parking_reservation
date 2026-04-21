@@ -27,18 +27,21 @@ public class ParkingBookingService {
     private final ParkingSlotRepository slotRepository;
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = true)
     public List<ParkingBookingResponse> getBookingsForUser(Long userId) {
         return bookingRepository.findByUserId(userId).stream()
                 .map(ParkingBookingResponse::from)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<ParkingBookingResponse> getAllBookings() {
         return bookingRepository.findAll().stream()
                 .map(ParkingBookingResponse::from)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public ParkingBookingResponse getBookingById(Long id) {
         return ParkingBookingResponse.from(findBooking(id));
     }
