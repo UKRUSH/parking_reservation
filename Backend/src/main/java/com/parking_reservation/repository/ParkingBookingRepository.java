@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Repository
 public interface ParkingBookingRepository extends JpaRepository<ParkingBooking, Long> {
@@ -16,6 +17,12 @@ public interface ParkingBookingRepository extends JpaRepository<ParkingBooking, 
     List<ParkingBooking> findByUserId(Long userId);
 
     List<ParkingBooking> findByStatus(BookingStatus status);
+
+    @Query("SELECT b.slot.id FROM ParkingBooking b WHERE b.status = 'APPROVED' " +
+           "AND b.startTime < :endTime AND b.endTime > :startTime")
+    Set<Long> findOccupiedSlotIds(
+            @Param("startTime") LocalDateTime startTime,
+            @Param("endTime") LocalDateTime endTime);
 
     @Query("SELECT COUNT(b) > 0 FROM ParkingBooking b WHERE b.slot.id = :slotId " +
            "AND b.status = 'APPROVED' " +
