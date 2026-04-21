@@ -94,13 +94,19 @@ function SlotPicker({ vehicleType, onBack, onBooked }) {
   const [booking, setBooking] = useState(false)
   const [error, setError] = useState(null)
 
-  const endTime = getTomorrowEnd()
   const startTime = new Date()
+  const endTime = getTomorrowEnd()
+  // LocalDateTime in Spring requires "yyyy-MM-ddTHH:mm:ss" — no Z or ms
+  const toLocal = (d) => d.toISOString().slice(0, 19)
 
   useEffect(() => {
+    setLoading(true)
+    setError(null)
+    // Don't pass date params — backend defaults to now → tomorrow 23:59
     parkingSlotApi
-      .getSlots(vehicleType, startTime.toISOString(), endTime.toISOString())
+      .getSlots(vehicleType)
       .then((res) => setSlots(res.data.data || []))
+      .catch(() => setError('Could not load parking map. Is the backend running?'))
       .finally(() => setLoading(false))
   }, [vehicleType])
 
@@ -111,8 +117,8 @@ function SlotPicker({ vehicleType, onBack, onBooked }) {
     try {
       await parkingBookingApi.create({
         slotId: selected.id,
-        startTime: startTime.toISOString().slice(0, 19),
-        endTime: endTime.toISOString().slice(0, 19),
+        startTime: toLocal(startTime),
+        endTime: toLocal(endTime),
         purpose: `${vehicleType} parking`,
       })
       onBooked()
@@ -143,6 +149,10 @@ function SlotPicker({ vehicleType, onBack, onBooked }) {
 
       {loading ? (
         <p className="text-gray-500 py-8 text-center">Loading parking map...</p>
+      ) : error ? (
+        <p className="text-red-600 bg-red-50 px-4 py-3 rounded-lg text-sm">{error}</p>
+      ) : slots.length === 0 ? (
+        <p className="text-gray-500 py-8 text-center">No parking spaces found for this vehicle type.</p>
       ) : (
         <ParkingMap
           slots={slots}
