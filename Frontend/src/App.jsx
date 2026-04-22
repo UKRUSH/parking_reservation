@@ -15,6 +15,7 @@ import MyBookingsPage from './pages/parking/MyBookingsPage'
 import ParkingSlotsPage from './pages/parking/ParkingSlotsPage'
 import NotificationsPage from './pages/notifications/NotificationsPage'
 import MyBorrowingsPage from './pages/helmets/MyBorrowingsPage'
+import AdminBorrowingsPage from './pages/helmets/AdminBorrowingsPage'
 
 // Redirects to the right dashboard based on role
 function RoleRedirect() {
@@ -66,6 +67,9 @@ export default function App() {
             } />
             <Route path="/admin/bookings" element={
               <AdminRoute><AdminBookingsPage /></AdminRoute>
+            } />
+            <Route path="/admin/helmet-borrowings" element={
+              <AdminRoute><AdminBorrowingsPage /></AdminRoute>
             } />
           </Routes>
         </NotificationProvider>
