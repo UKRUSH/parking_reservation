@@ -217,8 +217,11 @@ export default function AdminBorrowingsPage() {
                       <p className="font-medium text-gray-800">{b.userName}</p>
                       <p className="text-xs text-gray-400">{b.userEmail}</p>
                     </td>
-                    <td className="px-5 py-3 text-gray-500 max-w-[160px] truncate">
-                      {b.purpose || <span className="text-gray-300 italic">—</span>}
+                    <td className="px-5 py-3 text-gray-500 max-w-[160px]">
+                      <p className="text-xs font-semibold text-gray-700 mb-0.5">
+                        {b.quantity === 2 ? '🪖🪖 2 helmets' : '🪖 1 helmet'}
+                      </p>
+                      <span className="truncate block">{b.purpose || <span className="text-gray-300 italic">—</span>}</span>
                       {b.rejectionReason && (
                         <p className="text-xs text-red-400 mt-0.5">↳ {b.rejectionReason}</p>
                       )}

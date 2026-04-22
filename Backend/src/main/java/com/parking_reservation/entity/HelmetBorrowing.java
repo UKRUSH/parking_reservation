@@ -26,6 +26,9 @@ public class HelmetBorrowing {
 
     private String purpose;
 
+    @Column(nullable = false)
+    private int quantity = 1;
+
     private String rejectionReason;
 
     private LocalDateTime issuedAt;

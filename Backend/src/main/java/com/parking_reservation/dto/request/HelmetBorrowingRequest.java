@@ -5,4 +5,5 @@ import lombok.Data;
 @Data
 public class HelmetBorrowingRequest {
     private String purpose;
+    private int quantity = 1;
 }

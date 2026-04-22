@@ -98,6 +98,9 @@ export default function MyBorrowingsPage() {
                   <div className="flex justify-between items-start">
                     <div className="space-y-1">
                       <p className="font-semibold text-gray-800">Helmet Request #{b.id}</p>
+                      <p className="text-sm text-gray-600">
+                        {b.quantity === 2 ? '2 helmets' : '1 helmet'}
+                      </p>
                       {b.purpose && (
                         <p className="text-sm text-gray-500">Purpose: {b.purpose}</p>
                       )}

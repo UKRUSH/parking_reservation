@@ -107,6 +107,7 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
 
   // Helmet borrowing state (only relevant for MOTORCYCLE)
   const [helmetWanted, setHelmetWanted]           = useState(false)
+  const [helmetCount, setHelmetCount]             = useState(1)
   const [helmetPurpose, setHelmetPurpose]         = useState('')
   const [hasActiveHelmet, setHasActiveHelmet]     = useState(false)
   const [helmetCheckLoading, setHelmetCheckLoading] = useState(vehicleType === 'MOTORCYCLE')
@@ -163,7 +164,7 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
       })
       if (vehicleType === 'MOTORCYCLE' && helmetWanted && !hasActiveHelmet) {
         try {
-          await helmetBorrowingApi.create({ purpose: helmetPurpose.trim() || undefined })
+          await helmetBorrowingApi.create({ purpose: helmetPurpose.trim() || undefined, quantity: helmetCount })
         } catch {
           // helmet request failed silently — parking booking already confirmed
         }
@@ -365,7 +366,28 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
                     </label>
 
                     {helmetWanted && (
-                      <div className="mt-3">
+                      <div className="mt-3 space-y-3">
+                        {/* Quantity selector */}
+                        <div>
+                          <p className="text-xs font-medium text-orange-700 mb-1.5">How many helmets?</p>
+                          <div className="flex gap-2">
+                            {[1, 2].map(n => (
+                              <button
+                                key={n}
+                                type="button"
+                                onClick={() => setHelmetCount(n)}
+                                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-semibold border transition ${
+                                  helmetCount === n
+                                    ? 'bg-orange-500 text-white border-orange-500'
+                                    : 'bg-white text-orange-700 border-orange-300 hover:bg-orange-50'
+                                }`}
+                              >
+                                <span>🪖</span> {n}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
                         <input
                           type="text"
                           placeholder="Helmet purpose (optional)"
@@ -373,7 +395,7 @@ function BookingFormModal({ slot, vehicleType, onClose, onBooked }) {
                           onChange={e => setHelmetPurpose(e.target.value)}
                           className="w-full border border-orange-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
                         />
-                        <p className="text-xs text-orange-500 mt-1">
+                        <p className="text-xs text-orange-500">
                           Helmet request will be submitted automatically with your booking.
                         </p>
                       </div>

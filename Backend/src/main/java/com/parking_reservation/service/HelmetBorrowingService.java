@@ -56,9 +56,12 @@ public class HelmetBorrowingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
 
+        int qty = (request.getQuantity() == 2) ? 2 : 1;
+
         HelmetBorrowing borrowing = new HelmetBorrowing();
         borrowing.setUser(user);
         borrowing.setPurpose(request.getPurpose());
+        borrowing.setQuantity(qty);
 
         return HelmetBorrowingResponse.from(borrowingRepository.save(borrowing));
     }
@@ -70,12 +73,12 @@ public class HelmetBorrowingService {
         borrowing.setStatus(BorrowStatus.ISSUED);
         borrowing.setIssuedAt(LocalDateTime.now());
         HelmetBorrowingResponse response = HelmetBorrowingResponse.from(borrowingRepository.save(borrowing));
+        String helmetWord = borrowing.getQuantity() == 2 ? "2 helmets have" : "Your helmet has";
         notificationService.send(
                 borrowing.getUser().getId(),
                 NotificationType.HELMET_ISSUED,
                 "Helmet Issued",
-                "Your helmet borrowing request has been approved. " +
-                "Please collect your helmet from the admin office."
+                helmetWord + " been approved. Please collect from the admin office."
         );
         return response;
     }

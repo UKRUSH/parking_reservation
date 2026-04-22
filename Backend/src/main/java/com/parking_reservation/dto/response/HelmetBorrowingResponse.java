@@ -14,6 +14,7 @@ public class HelmetBorrowingResponse {
     private String userEmail;
     private String status;
     private String purpose;
+    private int quantity;
     private String rejectionReason;
     private LocalDateTime issuedAt;
     private LocalDateTime returnedAt;
@@ -27,6 +28,7 @@ public class HelmetBorrowingResponse {
         r.setUserEmail(h.getUser().getEmail());
         r.setStatus(h.getStatus().name());
         r.setPurpose(h.getPurpose());
+        r.setQuantity(h.getQuantity());
         r.setRejectionReason(h.getRejectionReason());
         r.setIssuedAt(h.getIssuedAt());
         r.setReturnedAt(h.getReturnedAt());
