@@ -161,6 +161,7 @@ function Sidebar({ open, onClose, user, logout, pending }) {
     { path: '/my-bookings',       label: 'My Bookings',      Ico: Icon.Bookings, badge: pending || null },
     { path: '/parking',           label: 'Find Parking',     Ico: Icon.Parking },
     { path: '/my-borrowings',     label: 'Helmet Borrowings',Ico: Icon.Helmet },
+    { path: '/tickets',           label: 'Incident Tickets', Ico: Icon.Shield },
     { path: '/notifications',     label: 'Notifications',    Ico: Icon.Bell },
   ]
 

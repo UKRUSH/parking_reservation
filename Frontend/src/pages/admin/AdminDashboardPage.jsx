@@ -66,6 +66,11 @@ export default function AdminDashboardPage() {
             <p className="font-semibold text-gray-800">Helmet Borrowings</p>
             <p className="text-sm text-gray-500 mt-1">Issue, reject and track helmet loans</p>
           </button>
+          <button onClick={() => navigate('/tickets')}
+            className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition text-left border-l-4 border-red-500">
+            <p className="font-semibold text-gray-800">Incident Tickets</p>
+            <p className="text-sm text-gray-500 mt-1">Assign technicians and manage incident reports</p>
+          </button>
         </div>
       </div>
     </div>
