@@ -105,6 +105,12 @@ public class IncidentTicketController {
 
     // ─── Attachments ──────────────────────────────────────────────────────────
 
+    // GET /api/v1/tickets/{id}/attachments — list all attachments for a ticket
+    @GetMapping("/{id}/attachments")
+    public ResponseEntity<ApiResponse<List<AttachmentResponse>>> listAttachments(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(ticketService.getAttachments(id)));
+    }
+
     // POST /api/v1/tickets/{id}/attachments
     @PostMapping(value = "/{id}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<AttachmentResponse>> uploadAttachment(
