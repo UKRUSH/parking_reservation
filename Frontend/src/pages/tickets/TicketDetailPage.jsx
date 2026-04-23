@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext'
 import NotificationBell from '../../components/common/NotificationBell'
 import TicketStatusStepper from '../../components/tickets/TicketStatusStepper'
 import CommentThread from '../../components/tickets/CommentThread'
+import AttachmentImage from '../../components/tickets/AttachmentImage'
 
 const STATUS_STYLE = {
   OPEN:        'bg-blue-100 text-blue-700',
@@ -38,10 +39,11 @@ export default function TicketDetailPage() {
   const isAdmin = hasRole('ADMIN')
   const isTech  = hasRole('TECHNICIAN')
 
-  const [ticket, setTicket]     = useState(null)
-  const [comments, setComments] = useState([])
+  const [ticket, setTicket]           = useState(null)
+  const [comments, setComments]       = useState([])
+  const [attachments, setAttachments] = useState([])
   const [technicians, setTechnicians] = useState([])
-  const [loading, setLoading]   = useState(true)
+  const [loading, setLoading]         = useState(true)
 
   const [assignId, setAssignId]         = useState('')
   const [techNotes, setTechNotes]       = useState('')
@@ -56,11 +58,24 @@ export default function TicketDetailPage() {
     Promise.all([
       ticketApi.getById(id),
       ticketApi.getComments(id),
-    ]).then(([tRes, cRes]) => {
+      ticketApi.listAttachments(id),
+    ]).then(([tRes, cRes, aRes]) => {
       setTicket(tRes.data.data)
       setComments(cRes.data.data || [])
+      setAttachments(aRes.data.data || [])
       setLoading(false)
     }).catch(() => setLoading(false))
+  }
+
+  const handleDeleteAttachment = async (fileId) => {
+    if (!confirm('Delete this attachment?')) return
+    try {
+      await ticketApi.deleteAttachment(id, fileId)
+      setAttachments(prev => prev.filter(a => a.id !== fileId))
+      notify('Attachment deleted.')
+    } catch {
+      notify('Failed to delete attachment.')
+    }
   }
 
   useEffect(() => {
@@ -253,6 +268,27 @@ export default function TicketDetailPage() {
 
           {/* Description */}
           <p className="text-sm text-gray-700 whitespace-pre-wrap mb-4">{ticket.description}</p>
+
+          {/* Attachments gallery */}
+          {attachments.length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-2">
+                Attachments ({attachments.length})
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {attachments.map(a => (
+                  <AttachmentImage
+                    key={a.id}
+                    ticketId={id}
+                    fileId={a.id}
+                    originalName={a.originalName}
+                    canDelete={isAdmin}
+                    onDelete={handleDeleteAttachment}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Meta */}
           <div className="grid grid-cols-2 gap-3 text-xs border-t border-gray-100 pt-4">
