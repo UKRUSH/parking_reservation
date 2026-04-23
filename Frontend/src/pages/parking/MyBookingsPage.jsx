@@ -178,39 +178,9 @@ function Sidebar({ open, onClose, user, logout, pending }) {
 
 /* ── Helpers ─────────────────────────────────────────────────────────────── */
 const VEHICLE_TYPES = [
-  {
-    id: 'CAR', label: 'Car', desc: 'Sedan, hatchback, compact',
-    icon: (
-      <svg viewBox="0 0 64 32" width="56" height="28" fill="currentColor">
-        <rect x="8" y="12" width="48" height="14" rx="3" />
-        <rect x="16" y="6" width="28" height="10" rx="2" />
-        <circle cx="18" cy="28" r="4" /><circle cx="46" cy="28" r="4" />
-      </svg>
-    ),
-  },
-  {
-    id: 'MOTORCYCLE', label: 'Motorcycle', desc: 'Bike, scooter',
-    icon: (
-      <svg viewBox="0 0 64 40" width="56" height="35" fill="none" stroke="currentColor" strokeWidth="3">
-        <circle cx="12" cy="30" r="8" />
-        <circle cx="52" cy="30" r="8" />
-        <path d="M12 30 L24 16 L38 16 L52 30" strokeLinejoin="round" />
-        <rect x="30" y="10" width="10" height="6" rx="1" fill="currentColor" stroke="none" />
-      </svg>
-    ),
-  },
-  {
-    id: 'SUV', label: 'SUV', desc: 'Truck, van, 4×4',
-    icon: (
-      <svg viewBox="0 0 64 36" width="56" height="32" fill="currentColor">
-        <rect x="6" y="14" width="52" height="14" rx="3" />
-        <rect x="12" y="6" width="36" height="12" rx="2" />
-        <rect x="14" y="8" width="15" height="8" rx="1" fillOpacity="0.25" />
-        <rect x="31" y="8" width="15" height="8" rx="1" fillOpacity="0.25" />
-        <circle cx="18" cy="30" r="5" /><circle cx="46" cy="30" r="5" />
-      </svg>
-    ),
-  },
+  { id: 'CAR',        label: 'Car',        desc: 'Sedan, hatchback, compact', emoji: '🚗', color: '#3b82f6' },
+  { id: 'MOTORCYCLE', label: 'Motorcycle', desc: 'Bike, scooter',             emoji: '🏍️', color: '#8b5cf6' },
+  { id: 'SUV',        label: 'SUV',        desc: 'Truck, van, 4×4',           emoji: '🚙', color: '#10b981' },
 ]
 
 const STATUS_FILTERS = ['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED']
@@ -471,11 +441,11 @@ function VehicleSelector({ onSelect }) {
       <div className="bk-vehicle-grid">
         {VEHICLE_TYPES.map(v => (
           <button key={v.id} className="bk-vehicle-card" onClick={() => onSelect(v.id)}>
-            <div className="bk-vehicle-icon">{v.icon}</div>
-            <div>
-              <div className="bk-vehicle-label">{v.label}</div>
-              <div className="bk-vehicle-desc">{v.desc}</div>
+            <div className="bk-vehicle-emoji-wrap" style={{ '--vc': v.color }}>
+              <span className="bk-vehicle-emoji">{v.emoji}</span>
             </div>
+            <div className="bk-vehicle-label">{v.label}</div>
+            <div className="bk-vehicle-desc">{v.desc}</div>
           </button>
         ))}
       </div>
