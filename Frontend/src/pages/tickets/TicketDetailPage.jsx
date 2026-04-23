@@ -71,10 +71,10 @@ export default function TicketDetailPage() {
   useEffect(() => {
     loadAll()
     if (isAdmin) {
-      userApi.getAllUsers()
+      userApi.getAll()
         .then(res => {
           const all = res.data.data || []
-          setTechnicians(all.filter(u => u.roles?.includes('TECHNICIAN')))
+          setTechnicians(all.filter(u => [...(u.roles ?? [])].includes('TECHNICIAN')))
         })
         .catch(() => {})
     }
