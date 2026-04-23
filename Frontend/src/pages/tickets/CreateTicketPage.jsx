@@ -15,8 +15,9 @@ export default function CreateTicketPage() {
     title: '', description: '', location: '', priority: 'MEDIUM',
   })
   const [files, setFiles]   = useState([])
-  const [busy, setBusy]     = useState(false)
-  const [error, setError]   = useState('')
+  const [busy, setBusy]         = useState(false)
+  const [uploadStep, setUploadStep] = useState('')
+  const [error, setError]       = useState('')
 
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
@@ -31,15 +32,19 @@ export default function CreateTicketPage() {
     }
 
     setBusy(true)
+    setUploadStep('Creating ticket…')
     try {
       const res = await ticketApi.create(form)
       const ticketId = res.data.data.id
 
-      for (const file of files) {
-        try {
-          await ticketApi.uploadAttachment(ticketId, file)
-        } catch {
-          // Attachment failures don't block ticket creation
+      if (files.length > 0) {
+        for (let i = 0; i < files.length; i++) {
+          setUploadStep(`Uploading image ${i + 1} of ${files.length}…`)
+          try {
+            await ticketApi.uploadAttachment(ticketId, files[i])
+          } catch {
+            // Attachment failures don't block ticket creation
+          }
         }
       }
 
@@ -48,6 +53,7 @@ export default function CreateTicketPage() {
       setError(err.response?.data?.message || 'Failed to create ticket. Please try again.')
     } finally {
       setBusy(false)
+      setUploadStep('')
     }
   }
 
@@ -163,7 +169,7 @@ export default function CreateTicketPage() {
               disabled={busy}
               className="flex-1 bg-blue-600 text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-blue-700 disabled:opacity-50"
             >
-              {busy ? 'Submitting…' : 'Submit Ticket'}
+              {uploadStep || 'Submit Ticket'}
             </button>
           </div>
         </form>
