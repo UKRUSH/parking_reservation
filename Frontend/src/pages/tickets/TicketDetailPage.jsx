@@ -38,20 +38,17 @@ export default function TicketDetailPage() {
   const isAdmin = hasRole('ADMIN')
   const isTech  = hasRole('TECHNICIAN')
 
-  const [ticket, setTicket]           = useState(null)
-  const [comments, setComments]       = useState([])
-  const [attachments, setAttachments] = useState([])
+  const [ticket, setTicket]     = useState(null)
+  const [comments, setComments] = useState([])
   const [technicians, setTechnicians] = useState([])
-  const [loading, setLoading]         = useState(true)
+  const [loading, setLoading]   = useState(true)
 
-  // Admin action state
-  const [assignId, setAssignId]       = useState('')
+  const [assignId, setAssignId]         = useState('')
+  const [techNotes, setTechNotes]       = useState('')
   const [rejectReason, setRejectReason] = useState('')
-  const [showReject, setShowReject]   = useState(false)
-  const [techNotes, setTechNotes]     = useState('')
-  const [nextStatus, setNextStatus]   = useState('')
-  const [busy, setBusy]               = useState(false)
-  const [toast, setToast]             = useState(null)
+  const [showReject, setShowReject]     = useState(false)
+  const [busy, setBusy]                 = useState(false)
+  const [toast, setToast]               = useState(null)
 
   const notify = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
@@ -60,10 +57,8 @@ export default function TicketDetailPage() {
       ticketApi.getById(id),
       ticketApi.getComments(id),
     ]).then(([tRes, cRes]) => {
-      const t = tRes.data.data
-      setTicket(t)
+      setTicket(tRes.data.data)
       setComments(cRes.data.data || [])
-      // Load attachments metadata via the list endpoint (not available directly — derive from ticket)
       setLoading(false)
     }).catch(() => setLoading(false))
   }
@@ -80,45 +75,45 @@ export default function TicketDetailPage() {
     }
   }, [id])
 
-  const canAdvance = (ticket) => {
-    if (!ticket) return false
-    const validFrom = isAdmin
-      ? ['IN_PROGRESS', 'RESOLVED']
-      : isTech
-        ? ['IN_PROGRESS']
-        : []
-    return validFrom.includes(ticket.status)
-  }
+  // ── Status transition handlers ─────────────────────────────────────────────
 
-  const nextStatusFor = (status) => {
-    if (status === 'IN_PROGRESS') return 'RESOLVED'
-    if (status === 'RESOLVED')    return 'CLOSED'
-    return null
-  }
-
-  const handleAssign = async () => {
-    if (!assignId) return
+  const handleMoveToInProgress = async () => {
     setBusy(true)
     try {
-      await ticketApi.assign(id, Number(assignId))
-      notify('Technician assigned.')
+      if (assignId) {
+        await ticketApi.assign(id, Number(assignId))
+      } else {
+        await ticketApi.updateStatus(id, 'IN_PROGRESS', techNotes || undefined)
+      }
+      notify('Ticket moved to In Progress.')
+      setTechNotes('')
+      setAssignId('')
       loadAll()
     } catch (err) {
-      notify(err.response?.data?.message || 'Failed to assign.')
+      notify(err.response?.data?.message || 'Failed to update.')
     } finally { setBusy(false) }
   }
 
-  const handleAdvance = async () => {
-    const next = nextStatusFor(ticket.status)
-    if (!next) return
+  const handleResolve = async () => {
     setBusy(true)
     try {
-      await ticketApi.updateStatus(id, next, techNotes || undefined)
-      notify(`Status updated to ${next.replace('_', ' ')}.`)
+      await ticketApi.updateStatus(id, 'RESOLVED', techNotes || undefined)
+      notify('Ticket marked as Resolved.')
       setTechNotes('')
       loadAll()
     } catch (err) {
-      notify(err.response?.data?.message || 'Failed to update status.')
+      notify(err.response?.data?.message || 'Failed to resolve.')
+    } finally { setBusy(false) }
+  }
+
+  const handleClose = async () => {
+    setBusy(true)
+    try {
+      await ticketApi.updateStatus(id, 'CLOSED')
+      notify('Ticket closed.')
+      loadAll()
+    } catch (err) {
+      notify(err.response?.data?.message || 'Failed to close.')
     } finally { setBusy(false) }
   }
 
@@ -149,6 +144,8 @@ export default function TicketDetailPage() {
     }
   }
 
+  // ── Loading / not found ────────────────────────────────────────────────────
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -171,12 +168,14 @@ export default function TicketDetailPage() {
   }
 
   const dashboardPath = isAdmin ? '/admin/dashboard' : '/student/dashboard'
+  const canActOn = ticket.status !== 'CLOSED' && ticket.status !== 'REJECTED'
 
   return (
     <div className="min-h-screen bg-gray-50">
+
       {/* Navbar */}
       <nav className="bg-white shadow-sm px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-gray-800">Smart Campus</h1>
+        <h1 className="text-xl font-bold text-gray-800">Smart Campus{isAdmin ? ' — Admin' : ''}</h1>
         <div className="flex items-center gap-4">
           <NotificationBell />
           <span className="text-sm text-gray-600">{user?.name}</span>
@@ -202,29 +201,23 @@ export default function TicketDetailPage() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6">
             <h3 className="font-bold text-gray-800 mb-1">Reject Ticket #{ticket.id}</h3>
-            <p className="text-sm text-gray-500 mb-4">Provide a reason to send to the reporter.</p>
+            <p className="text-sm text-gray-500 mb-4">This will notify the reporter.</p>
             <form onSubmit={handleReject} className="space-y-3">
               <textarea
                 rows={3}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-red-400"
-                placeholder="Rejection reason…"
+                placeholder="Reason for rejection…"
                 value={rejectReason}
                 onChange={e => setRejectReason(e.target.value)}
                 required
               />
               <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowReject(false)}
-                  className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg text-sm font-medium hover:bg-gray-50"
-                >
+                <button type="button" onClick={() => setShowReject(false)}
+                  className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={busy || !rejectReason.trim()}
-                  className="flex-1 bg-red-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50"
-                >
+                <button type="submit" disabled={busy || !rejectReason.trim()}
+                  className="flex-1 bg-red-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-red-700 disabled:opacity-50">
                   {busy ? 'Rejecting…' : 'Confirm Reject'}
                 </button>
               </div>
@@ -235,7 +228,7 @@ export default function TicketDetailPage() {
 
       <div className="max-w-3xl mx-auto px-6 py-8 space-y-6">
 
-        {/* Ticket header */}
+        {/* ── Ticket header ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-start justify-between gap-3 mb-4">
             <div>
@@ -262,109 +255,151 @@ export default function TicketDetailPage() {
           <p className="text-sm text-gray-700 whitespace-pre-wrap mb-4">{ticket.description}</p>
 
           {/* Meta */}
-          <div className="grid grid-cols-2 gap-3 text-xs text-gray-500 border-t border-gray-100 pt-4">
+          <div className="grid grid-cols-2 gap-3 text-xs border-t border-gray-100 pt-4">
             <div>
-              <span className="text-gray-400">Created</span>
+              <p className="text-gray-400">Created</p>
               <p className="font-medium text-gray-700">{fmt(ticket.createdAt)}</p>
             </div>
             <div>
-              <span className="text-gray-400">Last updated</span>
+              <p className="text-gray-400">Last updated</p>
               <p className="font-medium text-gray-700">{fmt(ticket.updatedAt)}</p>
             </div>
             {ticket.technicianName && (
               <div>
-                <span className="text-gray-400">Assigned to</span>
+                <p className="text-gray-400">Assigned to</p>
                 <p className="font-medium text-gray-700">🔧 {ticket.technicianName}</p>
               </div>
             )}
             {ticket.rejectionReason && (
               <div className="col-span-2">
-                <span className="text-gray-400">Rejection reason</span>
+                <p className="text-gray-400">Rejection reason</p>
                 <p className="font-medium text-red-600">{ticket.rejectionReason}</p>
               </div>
             )}
             {ticket.technicianNotes && (
               <div className="col-span-2">
-                <span className="text-gray-400">Technician notes</span>
+                <p className="text-gray-400">Technician notes</p>
                 <p className="font-medium text-gray-700">{ticket.technicianNotes}</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Admin / Tech actions */}
-        {(isAdmin || isTech) && ticket.status !== 'CLOSED' && ticket.status !== 'REJECTED' && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-4">
-            <h3 className="font-semibold text-gray-700 text-sm">Actions</h3>
+        {/* ── Admin / Tech workflow panel ── */}
+        {(isAdmin || isTech) && canActOn && (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
+            <h3 className="font-bold text-gray-800 text-base">Ticket Workflow</h3>
 
-            {/* Assign technician — admin only */}
-            {isAdmin && !ticket.technicianId && (
-              <div className="flex gap-2">
-                <select
-                  value={assignId}
-                  onChange={e => setAssignId(e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                >
-                  <option value="">Select a technician…</option>
-                  {technicians.map(t => (
-                    <option key={t.id} value={t.id}>{t.name} ({t.email})</option>
-                  ))}
-                </select>
-                <button
-                  onClick={handleAssign}
-                  disabled={busy || !assignId}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
-                >
-                  Assign
-                </button>
-              </div>
-            )}
+            {/* ── Step 2: In Progress ── */}
+            {ticket.status === 'OPEN' && isAdmin && (
+              <div className="border border-yellow-200 bg-yellow-50 rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-6 h-6 rounded-full bg-yellow-400 text-white text-xs font-bold flex items-center justify-center">2</span>
+                  <span className="font-semibold text-yellow-800 text-sm">Move to In Progress</span>
+                </div>
+                <p className="text-xs text-yellow-700">Assign a technician (optional) and start working on this ticket.</p>
 
-            {/* Advance status */}
-            {canAdvance(ticket) && (
-              <div className="space-y-2">
+                {technicians.length > 0 && (
+                  <select
+                    value={assignId}
+                    onChange={e => setAssignId(e.target.value)}
+                    className="w-full border border-yellow-300 bg-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                  >
+                    <option value="">— Assign technician (optional) —</option>
+                    {technicians.map(t => (
+                      <option key={t.id} value={t.id}>{t.name} ({t.email})</option>
+                    ))}
+                  </select>
+                )}
+
                 <textarea
                   rows={2}
-                  placeholder="Add technician notes (optional)…"
+                  placeholder="Add notes (optional)…"
                   value={techNotes}
                   onChange={e => setTechNotes(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className="w-full border border-yellow-300 bg-white rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-yellow-400"
                 />
                 <button
-                  onClick={handleAdvance}
+                  onClick={handleMoveToInProgress}
                   disabled={busy}
-                  className="w-full bg-green-600 text-white py-2 rounded-lg text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 transition"
                 >
-                  Mark as {nextStatusFor(ticket.status)?.replace('_', ' ')}
+                  {busy ? 'Updating…' : '▶ Start — Move to In Progress'}
                 </button>
               </div>
             )}
 
-            {/* Reject + Delete — admin only */}
-            {isAdmin && (
-              <div className="flex gap-2 pt-1 border-t border-gray-100">
-                {(ticket.status === 'OPEN' || ticket.status === 'IN_PROGRESS') && (
-                  <button
-                    onClick={() => setShowReject(true)}
-                    disabled={busy}
-                    className="flex-1 bg-red-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-red-600 disabled:opacity-50"
-                  >
-                    Reject Ticket
-                  </button>
-                )}
+            {/* ── Step 3: Resolved ── */}
+            {ticket.status === 'IN_PROGRESS' && (isAdmin || isTech) && (
+              <div className="border border-green-200 bg-green-50 rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-6 h-6 rounded-full bg-green-500 text-white text-xs font-bold flex items-center justify-center">3</span>
+                  <span className="font-semibold text-green-800 text-sm">Mark as Resolved</span>
+                </div>
+                <p className="text-xs text-green-700">Describe what was done to fix the issue before marking resolved.</p>
+                <textarea
+                  rows={3}
+                  placeholder="Describe the resolution (required for audit trail)…"
+                  value={techNotes}
+                  onChange={e => setTechNotes(e.target.value)}
+                  className="w-full border border-green-300 bg-white rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-green-400"
+                />
                 <button
-                  onClick={handleDelete}
+                  onClick={handleResolve}
                   disabled={busy}
-                  className="flex-1 border border-red-300 text-red-500 py-2 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 transition"
                 >
-                  Delete Ticket
+                  {busy ? 'Updating…' : '✓ Mark as Resolved'}
                 </button>
+              </div>
+            )}
+
+            {/* ── Step 4: Closed ── */}
+            {ticket.status === 'RESOLVED' && isAdmin && (
+              <div className="border border-gray-200 bg-gray-50 rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-6 h-6 rounded-full bg-gray-500 text-white text-xs font-bold flex items-center justify-center">4</span>
+                  <span className="font-semibold text-gray-700 text-sm">Close the Ticket</span>
+                </div>
+                <p className="text-xs text-gray-500">Close the ticket once you've confirmed the issue is fully resolved.</p>
+                <button
+                  onClick={handleClose}
+                  disabled={busy}
+                  className="w-full bg-gray-700 hover:bg-gray-800 text-white py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50 transition"
+                >
+                  {busy ? 'Closing…' : '✕ Close Ticket'}
+                </button>
+              </div>
+            )}
+
+            {/* ── Danger zone (admin only) ── */}
+            {isAdmin && (
+              <div className="border-t border-gray-100 pt-4">
+                <p className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-3">Danger Zone</p>
+                <div className="flex gap-2">
+                  {(ticket.status === 'OPEN' || ticket.status === 'IN_PROGRESS') && (
+                    <button
+                      onClick={() => setShowReject(true)}
+                      disabled={busy}
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition"
+                    >
+                      Reject Ticket
+                    </button>
+                  )}
+                  <button
+                    onClick={handleDelete}
+                    disabled={busy}
+                    className="flex-1 border border-red-300 text-red-500 py-2 rounded-lg text-sm font-medium hover:bg-red-50 disabled:opacity-50 transition"
+                  >
+                    Delete Ticket
+                  </button>
+                </div>
               </div>
             )}
           </div>
         )}
 
-        {/* Comments */}
+        {/* ── Comments ── */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <CommentThread
             ticketId={id}
@@ -378,6 +413,7 @@ export default function TicketDetailPage() {
             }}
           />
         </div>
+
       </div>
     </div>
   )
